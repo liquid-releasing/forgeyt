@@ -13,7 +13,7 @@ A small, local desktop app — no account, no cloud, no telemetry. Runs on Windo
 ## What it does
 
 1. Paste a YouTube URL into the form.
-2. Pick an audio format (MP3, M4A, WAV, Opus) and quality.
+2. Pick an audio format (MP3, M4A, Opus, WAV) and quality.
 3. Click **Forge**.
 4. The audio lands in your chosen folder.
 
@@ -49,7 +49,7 @@ pip install -r requirements-desktop.txt
 python forgeyt.py
 ```
 
-You'll need `ffmpeg` on your `PATH` when running from source. The packaged release bundles it.
+`ffmpeg` is included automatically — the `imageio-ffmpeg` pip package ships a static platform-specific binary, so you don't need a system install. The packaged release uses the same bundled binary.
 
 ## License
 
