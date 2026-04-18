@@ -1,0 +1,33 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# PyInstaller build output
+build/
+dist/
+*.spec.bak
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local test downloads
+/downloads/
+test_output/
+*.mp3
+*.m4a
+*.opus
+*.wav
+!media/**/*.wav
+
+# Generated icon variants
+/media/forgeyt.icns
