@@ -1,6 +1,6 @@
 # ForgeYT
 
-![ForgeYT](media/forgeyt-logo.png)
+![ForgeYT](media/forgeyt_horizontal.png)
 
 Paste a YouTube URL. Get the audio file on your disk.
 
@@ -14,14 +14,24 @@ A small, local desktop app — no account, no cloud, no telemetry. Runs on Windo
 
 1. Paste a YouTube URL into the form.
 2. Pick an audio format (MP3, M4A, Opus, WAV) and quality.
-3. Click **Forge**.
-4. The audio lands in your chosen folder.
+3. Click **Add to queue**. The title is looked up and the item is appended to the queue.
+4. Repeat for as many URLs as you like. Build the whole queue before forging.
+5. Click **Forge** once. ForgeYT works through the queue one item at a time.
+6. Each finished audio file lands in your chosen folder.
 
 Title, artist, and cover art (where available) are embedded as ID3 tags automatically.
 
+### About the queue
+
+- Items are processed sequentially — one download at a time, in the order you added them.
+- While a queue is forging, the **Add to queue** and **Forge** buttons are disabled. Wait for the run to finish before editing the queue.
+- If a single item fails (unavailable video, network blip), ForgeYT marks it failed and moves on to the next one.
+- The queue is in-memory only — close the app and it's gone. There's no persistence between sessions.
+
 ## What it doesn't do
 
-- No playlists, no batch URL lists, no channel scraping. One URL at a time.
+- No playlists, no batch URL lists, no channel scraping. One URL per queue item.
+- No parallel downloads — the queue is strictly sequential.
 - No video — audio only.
 - No account, no sign-in, no data sent anywhere except YouTube itself.
 
