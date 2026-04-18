@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Literal, Optional
@@ -37,24 +36,31 @@ class DownloadResult:
 
 
 def _locate_ffmpeg() -> Optional[str]:
-    """Find ffmpeg — bundled location first, then PATH."""
-    # PyInstaller bundle: ffmpeg lives next to the exe
-    if getattr(sys, "frozen", False):
-        bundle_dir = Path(sys._MEIPASS).parent  # type: ignore[attr-defined]
-        exe = "ffmpeg.exe" if sys.platform == "win32" else "ffmpeg"
-        candidate = bundle_dir / exe
-        if candidate.exists():
-            return str(candidate)
-    # Fall back to PATH
-    found = shutil.which("ffmpeg")
-    return found
+    """Find ffmpeg — prefer the imageio-ffmpeg bundled binary, fall back to PATH."""
+    try:
+        import imageio_ffmpeg  # noqa: PLC0415
+        path = imageio_ffmpeg.get_ffmpeg_exe()
+        if path and Path(path).exists():
+            return path
+    except Exception:
+        pass
+    return shutil.which("ffmpeg")
 
 
-def probe_url(url: str) -> dict:
+def probe_url(url: str, timeout_s: int = 8) -> dict:
     """Fetch metadata without downloading. Raises on failure."""
     import yt_dlp
 
-    with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "skip_download": True}) as ydl:
+    opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "skip_download": True,
+        "socket_timeout": timeout_s,
+        "noplaylist": True,
+        "playlist_items": "1",
+        "extractor_retries": 1,
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
         return ydl.extract_info(url, download=False)
 
 
@@ -96,7 +102,9 @@ def download_audio(
         "postprocessors": postprocessors,
         "writethumbnail": opts.embed_thumbnail,
         "ffmpeg_location": ffmpeg_path,
-        "noprogress": True,  # we route through progress_hooks instead
+        "noplaylist": True,   # URLs like ?v=X&list=Y should only grab the single video
+        "playlist_items": "1",
+        "noprogress": True,   # we route through progress_hooks instead
         "quiet": True,
         "no_warnings": True,
     }

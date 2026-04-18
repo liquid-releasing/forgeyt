@@ -1,0 +1,228 @@
+name: Release Builds
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Windows build
+  # ---------------------------------------------------------------------------
+  build-windows:
+    name: Build — Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-desktop.txt
+
+      - name: Build with PyInstaller
+        run: pyinstaller ForgeYT.spec --noconfirm --clean
+
+      - name: Verify build
+        run: |
+          if (!(Test-Path "dist\ForgeYT\ForgeYT.exe")) {
+            Write-Error "Build artifact not found"
+            exit 1
+          }
+
+      - name: Zip artifact
+        run: Compress-Archive -Path dist\ForgeYT -DestinationPath dist\ForgeYT-windows.zip
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForgeYT-windows
+          path: dist/ForgeYT-windows.zip
+
+  # ---------------------------------------------------------------------------
+  # macOS build
+  # ---------------------------------------------------------------------------
+  build-macos:
+    name: Build — macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-desktop.txt
+
+      - name: Generate .icns icon
+        run: |
+          ICO_SRC="media/forgeyt_icon2.png"
+          ICNS_OUT="media/forgeyt.icns"
+          if [ -f "$ICO_SRC" ] && [ ! -f "$ICNS_OUT" ]; then
+            ICONSET_DIR="$(mktemp -d)/ForgeYT.iconset"
+            mkdir -p "$ICONSET_DIR"
+            for SIZE in 16 32 64 128 256 512; do
+              sips -z "$SIZE" "$SIZE" "$ICO_SRC" --out "$ICONSET_DIR/icon_${SIZE}x${SIZE}.png" 2>/dev/null
+              DOUBLE=$((SIZE * 2))
+              sips -z "$DOUBLE" "$DOUBLE" "$ICO_SRC" --out "$ICONSET_DIR/icon_${SIZE}x${SIZE}@2x.png" 2>/dev/null
+            done
+            iconutil -c icns "$ICONSET_DIR" -o "$ICNS_OUT"
+            rm -rf "$(dirname "$ICONSET_DIR")"
+            echo "Generated $ICNS_OUT"
+          fi
+
+      - name: Build with PyInstaller
+        run: pyinstaller ForgeYT.spec --noconfirm --clean
+
+      - name: Verify build
+        run: |
+          if [ ! -d "dist/ForgeYT.app" ] && [ ! -d "dist/ForgeYT" ]; then
+            echo "Build artifact not found"
+            exit 1
+          fi
+
+      - name: Zip artifact
+        run: |
+          cd dist
+          if [ -d "ForgeYT.app" ]; then
+            zip -r ForgeYT-macos.zip ForgeYT.app
+          else
+            zip -r ForgeYT-macos.zip ForgeYT
+          fi
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForgeYT-macos
+          path: dist/ForgeYT-macos.zip
+
+  # ---------------------------------------------------------------------------
+  # Linux build
+  # ---------------------------------------------------------------------------
+  build-linux:
+    name: Build — Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies (PyWebView GTK backend)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-gi \
+            gir1.2-gtk-3.0 \
+            gir1.2-webkit2-4.1 \
+            libgirepository1.0-dev \
+            libcairo2-dev
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-desktop.txt
+
+      - name: Build with PyInstaller
+        run: pyinstaller ForgeYT.spec --noconfirm --clean
+
+      - name: Verify build
+        run: |
+          if [ ! -f "dist/ForgeYT/ForgeYT" ]; then
+            echo "Build artifact not found"
+            exit 1
+          fi
+
+      - name: Create tarball
+        run: tar -czf dist/ForgeYT-linux.tar.gz -C dist ForgeYT
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForgeYT-linux
+          path: dist/ForgeYT-linux.tar.gz
+
+  # ---------------------------------------------------------------------------
+  # Create GitHub Release with all artifacts
+  # ---------------------------------------------------------------------------
+  release:
+    name: Publish Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ForgeYT-windows
+          path: artifacts/
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ForgeYT-macos
+          path: artifacts/
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ForgeYT-linux
+          path: artifacts/
+
+      - name: Compute release name
+        id: relname
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          STRIPPED="${TAG#v}"
+          NAME="ForgeYT ${STRIPPED//-/ }"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: liquid-releasing/forgeyt-releases
+          token: ${{ secrets.RELEASES_PAT }}
+          name: ${{ steps.relname.outputs.name }}
+          prerelease: false
+          files: |
+            artifacts/ForgeYT-windows.zip
+            artifacts/ForgeYT-macos.zip
+            artifacts/ForgeYT-linux.tar.gz
+          body: |
+            > ⚠️ **Alpha release.** This build is under active development. Expect rough edges.
+
+            ForgeYT — paste a YouTube URL, get the audio on your disk. Small local desktop tool, no account, no cloud.
+
+            > **Liquid Releasing ships ForgeYT as a tool for users downloading content they have permission to access.** You are responsible for ensuring you have the right to download any file you fetch.
+
+            ## Downloads
+            - **Windows** — `ForgeYT-windows.zip` — unzip and run `ForgeYT.exe`
+            - **macOS** — `ForgeYT-macos.zip` — unzip and open `ForgeYT.app`
+            - **Linux** — `ForgeYT-linux.tar.gz` — extract and run `ForgeYT/ForgeYT`
+
+            Questions, bug reports, and feedback welcome in [our Discord](https://discord.gg/sZWCqgxY).
+          append_body: true
+          generate_release_notes: true

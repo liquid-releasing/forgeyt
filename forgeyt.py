@@ -39,10 +39,16 @@ def _run_streamlit_in_process(port: int, script: str) -> None:
     """Run Streamlit inside this process. Used by the bundled exe re-exec."""
     import sys as _sys
 
+    # In a PyInstaller bundle, streamlit can't detect that it's "pip-installed",
+    # so it defaults developmentMode=True — which conflicts with --server.port.
+    # Force it off.
+    os.environ["STREAMLIT_GLOBAL_DEVELOPMENT_MODE"] = "false"
+
     _sys.argv = [
         "streamlit",
         "run",
         script,
+        "--global.developmentMode=false",
         f"--server.port={port}",
         f"--server.address={STREAMLIT_HOST}",
         "--server.headless=true",
