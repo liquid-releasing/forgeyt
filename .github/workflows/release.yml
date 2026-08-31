@@ -223,6 +223,6 @@ jobs:
             - **macOS** — `ForgeYT-macos.zip` — unzip and open `ForgeYT.app`
             - **Linux** — `ForgeYT-linux.tar.gz` — extract and run `ForgeYT/ForgeYT`
 
-            Questions, bug reports, and feedback welcome in [our Discord](https://discord.gg/sZWCqgxY).
+            Questions, bug reports, and feedback welcome in [our Discord](https://discord.gg/UHdJFhEZF).
           append_body: true
           generate_release_notes: true

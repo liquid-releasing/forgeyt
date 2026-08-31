@@ -59,7 +59,7 @@ Written by human and Claude AI (Anthropic).
 #### Community
 
 Questions, bug reports, and feedback welcome in
-[our Discord](https://discord.gg/sZWCqgxY).
+[our Discord](https://discord.gg/UHdJFhEZF).
 
 ---
 
@@ -95,7 +95,7 @@ def about_text() -> str:
         "  - PyWebView (BSD 3-Clause)\n"
         "  - mutagen (GPL 2)\n\n"
         "Written by human and Claude AI (Anthropic).\n\n"
-        "Community: discord.gg/sZWCqgxY\n\n"
+        "Community: discord.gg/UHdJFhEZF\n\n"
         f"{APP_NAME} is a trademark of Liquid Releasing.\n"
         "(c) 2026 Liquid Releasing. MIT License.\n"
         "github.com/liquid-releasing/forgeyt\n\n"

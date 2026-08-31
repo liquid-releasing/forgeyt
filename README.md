@@ -6,7 +6,7 @@ Paste a YouTube URL. Get the audio file on your disk.
 
 A small, local desktop app — no account, no cloud, no telemetry. Runs on Windows, macOS, and Linux.
 
-**Download:** [latest release](https://github.com/liquid-releasing/forgeyt-releases/releases/latest) · **Community:** [Discord](https://discord.gg/sZWCqgxY)
+**Download:** [latest release](https://github.com/liquid-releasing/forgeyt-releases/releases/latest) · **Community:** [Discord](https://discord.gg/UHdJFhEZF)
 
 ---
 
